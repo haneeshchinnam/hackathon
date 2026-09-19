@@ -1,122 +1,136 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import type { FormEvent, ReactNode } from 'react'
+import { api, login, roles, session } from './api'
+import { demoAlerts, demoCases, demoCustomers, demoRules, ruleNames } from './data'
+import type { Alert, Case, Customer, Rule } from './data'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function Icon({ name, size = 20 }: { name: string; size?: number }) {
+ const paths: Record<string, ReactNode> = {
+ shield: <><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6z"/><path d="m8 12 3 3 5-6"/></>, grid: <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>, alert: <><path d="m10 4-8 14a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3L14 4a2 2 0 0 0-4 0Z"/><path d="M12 9v4m0 4h.01"/></>, folder: <path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>, users: <><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m1-16a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/></>, arrows: <><path d="M3 7h17l-4-4m5 14H4l4 4M20 7l-4 4M4 17l4-4"/></>, sliders: <><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></>, upload: <><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></>, search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></>, bell: <><path d="M5 17h14l-2-4V9a5 5 0 0 0-10 0v4Zm5 3h4"/></>, down: <path d="m6 9 6 6 6-6"/>, right: <path d="m9 5 7 7-7 7"/>, download: <><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></>, clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>, check: <path d="m5 12 4 4L19 6"/>, close: <path d="m6 6 12 12M6 18 18 6"/>, plus: <path d="M12 4v16M4 12h16"/>, globe: <><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></>, help: <><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5m0 3h.01"/></>, bolt: <path d="m13 2-9 12h7l-1 8 10-13h-7z"/>, calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></>, exit: <><path d="M10 4H4v16h6m4-13 5 5-5 5m-6-5h11"/></>, book: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8m-8 4h8m-8 4h5"/></>, refresh: <><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></> }
+ return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.grid}</svg>
 }
-
+const label = (s: string) => s.toLowerCase().replaceAll('_', ' ').replace(/^./, c => c.toUpperCase())
+const date = (s: string) => new Date(s).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+function Badge({ value }: { value: string }) { return <span className={`badge ${value.toLowerCase()}`}><i/>{label(value)}</span> }
+function App() {
+ const [page, setPage] = useState(session.get() && !roles().some(r => ['ROLE_ADMIN', 'ROLE_ANALYST'].includes(r)) ? 'Customers' : 'Overview')
+ const [live, setLive] = useState(!!session.get())
+ const [alerts, setAlerts] = useState<Alert[]>(session.get() ? [] : demoAlerts)
+ const [customers, setCustomers] = useState<Customer[]>(session.get() ? [] : demoCustomers)
+ const [cases, setCases] = useState<Case[]>(session.get() ? [] : demoCases)
+ const [rules, setRules] = useState<Rule[]>(session.get() ? [] : demoRules)
+ const [transactions, setTransactions] = useState<Record<string, unknown>[]>([])
+ const [selected, setSelected] = useState<Alert | null>(null)
+ const [caseDetail, setCaseDetail] = useState<Case | null>(null)
+ const [record, setRecord] = useState<Record<string, unknown> | null>(null)
+ const [audit, setAudit] = useState<Record<string, unknown>[]>([])
+ const [search, setSearch] = useState('')
+ const [status, setStatus] = useState('All statuses')
+ const [risk, setRisk] = useState('All risk levels')
+ const [pageNum, setPageNum] = useState(0)
+ const [loginOpen, setLoginOpen] = useState(false)
+ const [busy, setBusy] = useState(false)
+ const [error, setError] = useState('')
+ const [toast, setToast] = useState('')
+ const [reason, setReason] = useState('')
+ const [caseTitle, setCaseTitle] = useState('')
+ const [period, setPeriod] = useState('Last 7 days')
+ const [importKind, setImportKind] = useState('transactions')
+ const [file, setFile] = useState<File | null>(null)
+ const [report, setReport] = useState<Record<string, unknown> | null>(null)
+ const [revision, setRevision] = useState(0)
+ const userRoles = live ? roles() : ['ROLE_ADMIN']
+ const isAdmin = userRoles.includes('ROLE_ADMIN')
+ const canAnalyze = isAdmin || userRoles.includes('ROLE_ANALYST')
+ const canImport = isAdmin || userRoles.includes('ROLE_INGESTOR')
+ const nav = [{ title: 'Overview', icon: 'grid', show: canAnalyze }, { title: 'Alert queue', icon: 'alert', show: canAnalyze }, { title: 'Cases', icon: 'folder', show: canAnalyze }, { title: 'Customers', icon: 'users', show: true }, { title: 'Transactions', icon: 'arrows', show: canAnalyze }, { title: 'Detection rules', icon: 'sliders', show: isAdmin }, { title: 'Data ingestion', icon: 'upload', show: canImport }]
+ useEffect(() => {
+  if (!selected && !caseDetail && !record && !loginOpen) return
+  const previous = document.activeElement as HTMLElement | null
+  const dialogs = document.querySelectorAll<HTMLElement>('[role=dialog]')
+  const dialog = dialogs[dialogs.length - 1]
+  const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input, textarea, select, a[href], summary'))
+  focusable()[0]?.focus()
+  const keydown = (e: KeyboardEvent) => {
+   if (e.key === 'Escape') { if (loginOpen) setLoginOpen(false); else if (record) setRecord(null); else if (caseDetail) setCaseDetail(null); else setSelected(null) }
+   if (e.key === 'Tab') { const items = focusable(); const first = items[0]; const last = items[items.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus() } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() } }
+  }
+  document.addEventListener('keydown', keydown)
+  document.body.style.overflow = 'hidden'
+  return () => { document.removeEventListener('keydown', keydown); document.body.style.overflow = ''; previous?.focus() }
+ }, [selected, caseDetail, record, loginOpen])
+ useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 4200); return () => clearTimeout(timer) }, [toast])
+ useEffect(() => {
+  if (!live) return
+  let active = true
+  const resource = page === 'Customers' ? 'customers' : page === 'Cases' ? 'cases' : page === 'Detection rules' ? 'config/rules' : page === 'Transactions' ? 'transactions' : page === 'Data ingestion' ? null : 'alerts'
+  if (!resource) return
+  const query = resource === 'config/rules' ? '' : `?page=${pageNum}&size=10${resource === 'alerts' && status !== 'All statuses' ? `&status=${status}` : ''}`
+  const timer = setTimeout(() => { setBusy(true); setError('') }, 0)
+  api<unknown[]>(`/${resource}${query}`).then(data => { if (!active) return; if (resource === 'customers') setCustomers(data as Customer[]); else if (resource === 'cases') setCases(data as Case[]); else if (resource === 'config/rules') setRules(data as Rule[]); else if (resource === 'transactions') setTransactions(data as Record<string, unknown>[]); else setAlerts(data as Alert[]) }).catch(e => { if (active) { setError(e.message); if (!session.get()) setLoginOpen(true) } }).finally(() => { clearTimeout(timer); if (active) setBusy(false) })
+  return () => { active = false; clearTimeout(timer) }
+ }, [live, page, pageNum, status, revision])
+ const navigate = (next: string) => { setPage(next); setSearch(''); setStatus('All statuses'); setPageNum(0); setError(''); setSelected(null); setRecord(null) }
+ const visibleAlerts = alerts.filter(a => (status === 'All statuses' || a.status === status) && (risk === 'All risk levels' || (risk === 'High risk' ? a.risk_score >= 80 : a.risk_score < 80)) && `${a.id} ${a.customer_id} ${a.typology || ''}`.toLowerCase().includes(search.toLowerCase()))
+ async function run(action: () => Promise<void>) { setBusy(true); setError(''); try { await action() } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong') } finally { setBusy(false) } }
+ async function openAlert(a: Alert) {
+  setReason(''); setCaseTitle(''); setAudit([]); setSelected(a)
+  if (live) await run(async () => { const [detail, history] = await Promise.all([api<Alert>(`/alerts/${a.id}`), api<Record<string, unknown>[]>(`/alerts/${a.id}/audit`)]); setSelected(detail); setAudit(history) })
+ }
+ async function disposition(next: string) {
+  if (!selected || !reason.trim()) return
+  await run(async () => { if (live) await api(`/alerts/${selected.id}/disposition`, { method: 'PATCH', body: JSON.stringify({ status: next, reason }) }); setAlerts(prev => prev.map(a => a.id === selected.id ? { ...a, status: next } : a)); setSelected({ ...selected, status: next }); setRevision(r => r + 1); setAudit(prev => [...prev, { new_state: next, reason, actor: live ? 'Current analyst' : 'Alex Morgan', occurred_at: new Date().toISOString() }]); setReason(''); setToast(`Alert ${label(next).toLowerCase()}${live ? '' : ' · demo change'}`) })
+ }
+ async function createCase() { if (!selected || !caseTitle.trim()) return; await run(async () => {
+  if (!live && cases.some(c => c.alertIds?.includes(selected.id))) throw new Error('This alert already belongs to a case.')
+  const result = live ? await api<{ id: number }>('/cases', { method: 'POST', body: JSON.stringify({ title: caseTitle, alertIds: [selected.id], assignedTo: null }) }) : { id: 202 + cases.length }
+  setCases(prev => [...prev, { id: result.id, customer_id: selected.customer_id, title: caseTitle, status: 'OPEN', assigned_to: null, created_at: new Date().toISOString(), alertIds: [selected.id] }]); setSelected(null); navigate('Cases'); setToast(`Case #${result.id} created`) }) }
+ function exportQueue() { const csv = ['Alert ID,Customer ID,Risk score,Status,Created', ...visibleAlerts.map(a => [a.id, a.customer_id, a.risk_score, a.status, a.created_at].join(','))].join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const link = document.createElement('a'); link.href = url; link.download = 'sentinel-alerts.csv'; link.click(); URL.revokeObjectURL(url); setToast('Current alert view exported') }
+ const openCount = alerts.filter(a => a.status === 'OPEN').length
+ const highCount = alerts.filter(a => a.risk_score >= 80 && !['CLEARED', 'ESCALATED'].includes(a.status)).length
+ const reviewing = alerts.filter(a => a.status === 'IN_REVIEW').length
+ const cleared = alerts.filter(a => a.status === 'CLEARED').length
+ const modal = (title: string, content: ReactNode, close: () => void) => <div className="overlay" onClick={close}><section className="drawer" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}><header><div><span className="eyebrow">SENTINEL WORKSPACE</span><h2>{title}</h2></div><button className="icon-button" onClick={close} aria-label="Close dialog"><Icon name="close"/></button></header>{content}</section></div>
+ return <div className="app-shell">
+  <aside className="sidebar"><a className="brand" href="#" onClick={e => { e.preventDefault(); navigate(canAnalyze ? 'Overview' : 'Customers') }}><span className="brand-icon"><Icon name="shield" size={26}/></span><span>sentinel<span className="brand-aml">AML PLATFORM</span></span></a>
+   <div className="workspace"><span className="bank-icon">M</span><div>MeridianTrust Bank<small>Compliance workspace</small></div><Icon name="down" size={14}/></div>
+   <span className="nav-label">WORKSPACE</span><nav>{nav.filter(n => n.show).map((n, i) => <div key={n.title}>{i === 5 && <span className="nav-label config-label">CONFIGURATION</span>}<button title={n.title} aria-label={n.title} className={`nav-item ${page === n.title ? 'active' : ''}`} onClick={() => navigate(n.title)}><Icon name={n.icon}/><span>{n.title}</span>{n.title === 'Alert queue' && <b>{openCount}</b>}</button></div>)}</nav>
+   <div className="sidebar-bottom"><div className="system-status"><span className="pulse"/><div>{live ? 'Backend connected' : 'Prototype workspace'}<small>{live ? 'Authenticated API session' : 'Explore with sample data'}</small></div></div><button className="nav-item" onClick={() => navigate('Help & documentation')}><Icon name="help"/>Help & documentation<Icon name="right" size={14}/></button><button className="profile" onClick={() => setLoginOpen(true)}><span className="avatar">{live ? 'ME' : 'AM'}</span><span>{live ? 'Your workspace' : 'Alex Morgan'}<small>{live ? userRoles.map(r => label(r.replace('ROLE_', ''))).join(', ') : 'Compliance analyst'}</small></span><Icon name="down" size={14}/></button></div>
+  </aside>
+  <div className="main-shell"><header className="topbar"><div className="breadcrumb">Workspace<Icon name="right" size={13}/><span>{page}</span></div><div className="top-actions"><span className={`mode ${live ? 'live' : ''}`}><i/>{live ? 'Live API' : 'Demo environment'}</span><button className="icon-button notification" aria-label="Show open alerts" onClick={() => { navigate('Alert queue'); setStatus('OPEN') }}><Icon name="bell"/><i/></button><span className="top-divider"/><span className="avatar small">{live ? 'ME' : 'AM'}</span></div></header>
+  <main><div className="page-heading"><div><div className="eyebrow">YOUR COMPLIANCE COMMAND CENTER</div><h1>{page === 'Overview' ? 'Monitoring overview' : page}</h1><p>{page === 'Overview' ? 'A clear view of risk. A faster path to action.' : page === 'Alert queue' ? 'Investigate, prioritize, and act on suspicious activity.' : page === 'Cases' ? 'Turn investigations into clear, auditable outcomes.' : page === 'Customers' ? 'Know your customers. Understand their risk.' : page === 'Detection rules' ? 'Transparent detection, configured for your business.' : page === 'Data ingestion' ? 'Bring customer, account, and transaction data into Sentinel.' : page === 'Transactions' ? 'Follow the movement of funds across your accounts.' : 'Everything you need to explore Sentinel.'}</p></div><div className="heading-actions">{(page === 'Overview' || page === 'Alert queue') && <><button className="button" onClick={exportQueue}><Icon name="download" size={16}/>Export report</button><button className="button primary" onClick={() => navigate('Data ingestion')} disabled={!canImport}><Icon name="plus" size={17}/>Import data</button></>}{live && <button className="button" onClick={() => setRevision(r => r + 1)}><Icon name="refresh" size={16}/>Refresh</button>}</div></div>
+  {error && <div className="error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
+  {busy && <div className="loading" role="status">Working on your request…</div>}
+  {(page === 'Overview' || page === 'Alert queue') && <>
+   {page === 'Overview' && <><div className="overview-subhead"><span><span className="pulse"/> {live ? 'Current page summary' : 'Sample monitoring snapshot'}<span className="muted">· {live ? 'Up to 10 records' : '20 July 2026, 16:12 IST'}</span></span><span className="muted"><Icon name="calendar" size={14}/>{live ? new Date().toLocaleDateString('en-GB') : '20 Jul 2026'}</span></div>
+   <div className="stats">{[{ title: 'Open alerts', value: openCount.toString().padStart(2, '0'), icon: 'alert', color: 'blue', foot: 'Awaiting analyst review', tag: 'Needs attention' }, { title: 'High-risk alerts', value: highCount.toString().padStart(2, '0'), icon: 'bolt', color: 'red', foot: 'Risk score of 80 or higher', tag: 'Priority review' }, { title: 'Under investigation', value: reviewing.toString().padStart(2, '0'), icon: 'folder', color: 'purple', foot: 'Actively being reviewed', tag: 'In progress' }, { title: 'Cleared alerts', value: cleared.toString().padStart(2, '0'), icon: 'check', color: 'green', foot: 'Disposition recorded', tag: 'Resolved' }].map(stat => <article className="stat" key={stat.title}><div className="stat-top"><span>{stat.title}</span><span className={`stat-icon ${stat.color}`}><Icon name={stat.icon} size={18}/></span></div><div className="stat-value">{stat.value}<span className={`stat-tag ${stat.color}`}>{stat.tag}</span></div><small>{stat.foot}</small></article>)}</div>
+   <div className="charts"><section className="panel activity-panel"><div className="panel-heading"><div><h2>Alert activity</h2><p>{live ? 'Distribution of alerts on the current page' : 'A pulse on suspicious activity across your network'}</p></div><select aria-label="Chart period" value={period} onChange={e => setPeriod(e.target.value)} disabled={live}><option>Last 7 days</option><option>Last 14 days</option></select></div><div className="chart-legend"><span><i className="legend-green"/>{live ? 'Loaded alerts' : 'Total alerts'}</span><span><i className="legend-light"/>High risk</span>{!live && <small>Illustrative demo trend</small>}</div><ActivityChart live={live} alerts={alerts} period={period}/></section>
+   <section className="panel typology-panel"><div className="panel-heading"><div><h2>Alerts by typology</h2><p>{live ? 'Open an alert to see triggered rules' : 'Understand what’s driving your alerts'}</p></div><Icon name="sliders" size={17}/></div>{live ? <div className="empty">Typology breakdown is available in individual alert evidence.</div> : <><div className="donut-row"><div className="donut"><div><strong>10</strong><span>Total alerts</span></div></div><div className="donut-note"><span className="tiny-label">LEADING TYPOLOGY</span><strong>Structuring</strong><span>20% of sample alerts</span><small>Repeated near-threshold activity</small></div></div><div className="typology-list">{['Structuring', 'Rapid movement', 'Behavioral deviation', 'Threshold breach', 'Other typologies'].map((t, i) => <div key={t}><span><i style={{ background: ['#168779', '#55b4a4', '#9ed4c5', '#c3e7db', '#e2eee9'][i] }}/>{t}</span><strong>2 <small>20%</small></strong></div>)}</div></>}</section></div></>}
+   <section className="panel queue-panel"><div className="panel-heading"><div className="title-inline"><h2>{page === 'Overview' ? 'Priority alert queue' : 'All alerts'}</h2><span className="count-pill">{visibleAlerts.length} alerts</span></div>{page === 'Overview' && <button className="text-button" onClick={() => navigate('Alert queue')}>View all alerts <Icon name="right" size={15}/></button>}</div><div className="table-toolbar"><label className="search"><Icon name="search" size={17}/><input placeholder="Search alert ID, customer, or typology…" value={search} onChange={e => setSearch(e.target.value)}/><kbd>⌕</kbd></label><div className="filters"><select aria-label="Filter alert status" value={status} onChange={e => { setStatus(e.target.value); setPageNum(0) }}><option>All statuses</option>{['OPEN', 'IN_REVIEW', 'CLEARED', 'ESCALATED'].map(s => <option key={s} value={s}>{label(s)}</option>)}</select><select aria-label="Filter risk level" value={risk} onChange={e => setRisk(e.target.value)}><option>All risk levels</option><option>High risk</option><option>Below 80</option></select><span className="sort-label"><Icon name="sliders" size={15}/>Highest risk first</span></div></div>
+   <div className="table-scroll"><table><thead><tr><th>ALERT ID</th><th>CUSTOMER</th><th>TRIGGERED TYPOLOGY</th><th>RISK SCORE ↓</th><th>STATUS</th><th>DETECTED</th><th/></tr></thead><tbody>{visibleAlerts.slice(0, page === 'Overview' ? 5 : 10).map(a => <tr key={a.id} onClick={() => openAlert(a)}><td><button className="id-link" onClick={e => { e.stopPropagation(); openAlert(a) }}>ALT-{a.id}</button></td><td><div className="customer-cell"><span className="mini-avatar">{demoCustomers.find(c => c.id === a.customer_id)?.first_name[0] || 'C'}</span><div>{a.customer_id}<small>{live ? 'Protected customer identity' : `${demoCustomers.find(c => c.id === a.customer_id)?.first_name || 'C***'} ${demoCustomers.find(c => c.id === a.customer_id)?.last_name || ''}`}</small></div></div></td><td><span className="typology"><Icon name={a.typology === 'High-risk jurisdiction' ? 'globe' : 'arrows'} size={14}/>{a.typology || 'View triggered rules'}</span></td><td><span className={`risk-score ${a.risk_score >= 80 ? 'high' : 'medium'}`}><i/>{a.risk_score}<small>/ 100</small></span></td><td><Badge value={a.status}/></td><td className="date-cell">{date(a.created_at)}</td><td><Icon name="right" size={15}/></td></tr>)}</tbody></table>{!visibleAlerts.length && <div className="empty">No alerts match your filters.</div>}</div><div className="table-footer"><span>{live ? 'Current page' : 'Sample data'} · Showing {Math.min(visibleAlerts.length, page === 'Overview' ? 5 : 10)} of {visibleAlerts.length} loaded alerts</span><span>{live && <><button className="button" disabled={!pageNum} onClick={() => setPageNum(p => p - 1)}>Previous</button><button className="button" disabled={alerts.length < 10} onClick={() => setPageNum(p => p + 1)}>Next</button></>}<Icon name="shield" size={13}/>Sensitive customer information is masked</span></div></section>
+  </>}
+  {page === 'Customers' && <section className="panel"><div className="panel-heading"><h2>Customer directory</h2><label className="search"><Icon name="search" size={16}/><input placeholder="Search this page…" value={search} onChange={e => setSearch(e.target.value)}/></label></div><div className="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>ID</th><th>COUNTRY</th><th>KYC STATUS</th><th>RISK RATING</th><th>PEP</th><th/></tr></thead><tbody>{customers.filter(c => `${c.id} ${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())).map(c => <tr key={c.id}><td>{c.first_name} {c.last_name}</td><td className="mono">{c.id}</td><td>{c.country}</td><td><Badge value={c.kyc_status}/></td><td><Badge value={c.risk_rating}/></td><td>{c.politically_exposed ? 'Yes' : 'No'}</td><td>{canAnalyze && <button className="text-button" onClick={() => run(async () => { if (live) { const [detail, accounts, tx] = await Promise.all([api<Record<string, unknown>>(`/customers/${c.id}`), api<unknown[]>(`/accounts?customerId=${c.id}`), api<unknown[]>(`/transactions?customerId=${c.id}`)]); setRecord({ ...detail, accounts, transactions: tx }) } else setRecord({ ...c, first_name: c.id === 'CUST_00001' ? 'Krishna' : c.first_name, last_name: c.id === 'CUST_00001' ? 'Sharma' : c.last_name, city: 'Gurugram', note: 'Sample customer profile. First two customer IDs originate from the supplied CSV.', accounts: c.id === 'CUST_00001' ? [{ id: 'ACC_000001', account_type: 'NRE', currency: 'INR', current_balance: 33507.22 }, { id: 'ACC_000002', account_type: 'SAVINGS', currency: 'INR', current_balance: 25171.02 }] : [] }) })}>View profile <Icon name="right" size={14}/></button>}</td></tr>)}</tbody></table></div><Pagination live={live} page={pageNum} count={customers.length} change={setPageNum}/></section>}
+  {page === 'Cases' && <section className="panel"><div className="panel-heading"><h2>Investigation workspace</h2><button className="button primary" onClick={() => { navigate('Alert queue'); setToast('Open an alert to create a linked case') }}><Icon name="plus" size={16}/>Create from alert</button></div><div className="table-scroll"><table><thead><tr><th>CASE</th><th>CUSTOMER</th><th>ASSIGNED TO</th><th>STATUS</th><th>CREATED</th><th/></tr></thead><tbody>{cases.map(c => <tr key={c.id}><td><strong>CASE-{c.id}</strong><small className="cell-sub">{c.title || 'Customer investigation'}</small></td><td className="mono">{c.customer_id}</td><td>{c.assigned_to || 'Unassigned'}</td><td><Badge value={c.status}/></td><td>{date(c.created_at)}</td><td><button className="text-button" onClick={() => run(async () => { setReason(''); setCaseDetail(live ? await api<Case>(`/cases/${c.id}`) : c); setAudit(live ? await api<Record<string, unknown>[]>(`/cases/${c.id}/audit`) : []) })}>Open case <Icon name="right" size={14}/></button></td></tr>)}</tbody></table>{!cases.length && <div className="empty">No cases yet. Open an alert to start an investigation.</div>}</div><Pagination live={live} page={pageNum} count={cases.length} change={setPageNum}/></section>}
+  {page === 'Detection rules' && <><div className="info-banner"><Icon name="shield"/><div><strong>Explainable by design</strong><p>Every alert includes the rules that triggered it and the evidence behind it. {live ? 'Changes apply to future detections.' : 'Demo settings are kept for this session only.'}</p></div></div><div className="rule-grid">{rules.map(rule => <article className="panel rule-card" key={rule.code}><div className="rule-top"><span className="stat-icon green"><Icon name={rule.code === 'HIGH_RISK' ? 'globe' : 'sliders'}/></span><button aria-label={`Toggle ${ruleNames[rule.code]}`} aria-pressed={rule.enabled} className={`toggle ${rule.enabled ? 'on' : ''}`} disabled={rule.code === 'HIGH_RISK' || busy} onClick={() => setRules(prev => prev.map(r => r.code === rule.code ? { ...r, enabled: !r.enabled } : r))}><span/></button></div><h2>{ruleNames[rule.code]}</h2><p>{rule.code === 'HIGH_RISK' ? 'Always-on screening for watchlisted jurisdictions and counterparties.' : `Detect ${ruleNames[rule.code]?.toLowerCase()} with configurable parameters.`}</p><div className="rule-fields">{(['threshold', 'secondaryThreshold', 'windowHours', 'minimumCount', 'weight'] as const).map(key => <label key={key}>{({ threshold: 'Threshold', secondaryThreshold: 'Secondary threshold', windowHours: 'Window (hours)', minimumCount: 'Minimum count', weight: 'Risk weight' })[key]}<input type="number" min="0" step="any" value={rule[key]} onChange={e => setRules(prev => prev.map(r => r.code === rule.code ? { ...r, [key]: Number(e.target.value) } : r))}/></label>)}</div><button className="button" disabled={busy} onClick={() => run(async () => { if (live) { const { code, ...body } = rule; await api(`/config/rules/${code}`, { method: 'PUT', body: JSON.stringify(body) }); setRevision(r => r + 1) } setToast(`${ruleNames[rule.code]} saved${live ? '' : ' in demo session'}`) })}>Save configuration<Icon name="check" size={16}/></button></article>)}</div></>}
+  {page === 'Data ingestion' && <div className="ingestion-layout"><section className="panel import-panel"><h2>Import your data</h2><p>Upload a CSV to bring new records into your monitoring workspace.</p><div className="tabs">{['customers', 'accounts', 'transactions'].map(k => <button key={k} className={importKind === k ? 'selected' : ''} onClick={() => { setImportKind(k); setReport(null); setFile(null) }}>{label(k)}</button>)}</div><label className="upload-zone"><span className="upload-circle"><Icon name="upload" size={29}/></span><strong>{file ? file.name : 'Choose a CSV file to upload'}</strong><span>Click to browse your files</span><small>CSV only · Maximum 20 MB · Up to 10,000 records</small><input key={importKind} type="file" accept=".csv,text/csv" onChange={e => { setFile(e.target.files?.[0] || null); setReport(null) }}/></label><button className="button primary" disabled={!file || busy} onClick={() => run(async () => { if (!file) return; if (file.size > 20 * 1024 * 1024) throw new Error('File exceeds the 20 MB limit.'); if (!live) { setReport({ mode: 'Preview only — no records imported', file: file.name, size: `${(file.size / 1024).toFixed(1)} KB`, next_step: 'Connect to the backend to validate and import this file.' }); return } const body = new FormData(); body.append('file', file); setReport(await api(`/imports/${importKind}`, { method: 'POST', body })); setToast('Import finished. Review the report below.') })}><Icon name="upload" size={17}/>{live ? 'Import records' : 'Preview import'}</button>{report && <div className="report"><h3>Import report</h3><RecordView record={report}/></div>}</section><section className="panel import-guide"><span className="stat-icon green"><Icon name="book"/></span><h2>A good start for good data</h2><p>Import records in order to preserve the relationships in your data.</p>{['Customers — establish KYC profiles', 'Accounts — link to existing customers', 'Transactions — evaluate activity'].map((t, i) => <div className="guide-step" key={t}><b>{i + 1}</b><span>{t}</span></div>)}<div className="guide-note"><Icon name="shield" size={18}/><p>Detection runs on the backend. Transaction import results include accepted records, rejected records, and row-level errors.</p></div></section></div>}
+  {page === 'Transactions' && <section className="panel"><div className="panel-heading"><h2>Transaction ledger</h2><span className="muted">Amounts displayed in original currency</span></div>{!live ? <div className="empty large"><span className="stat-icon green"><Icon name="arrows" size={25}/></span><h2>Your transaction trail starts here</h2><p>The supplied files contain customers and accounts. Connect your backend to inspect actual transaction records.</p><button className="button primary" onClick={() => setLoginOpen(true)}>Connect backend <Icon name="right" size={16}/></button></div> : <><div className="table-scroll"><table><thead><tr><th>TRANSACTION</th><th>ACCOUNT</th><th>AMOUNT</th><th>DIRECTION</th><th>COUNTERPARTY</th><th>DATE</th></tr></thead><tbody>{transactions.map(t => <tr key={String(t.id)}><td><button className="id-link" onClick={() => run(async () => setRecord(await api(`/transactions/${t.id}`)))}>{String(t.id)}</button></td><td>{String(t.account_id)}</td><td>{String(t.currency)} {Number(t.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td><td>{String(t.direction)}</td><td>{String(t.counterparty)}</td><td>{date(String(t.occurred_at))}</td></tr>)}</tbody></table>{!transactions.length && <div className="empty">No transactions on this page.</div>}</div><Pagination live page={pageNum} count={transactions.length} change={setPageNum}/></>}</section>}
+  {page === 'Help & documentation' && <section className="panel help-panel"><h2>Welcome to Sentinel AML</h2><p>This prototype follows the Sentinel backend contract. Demo alerts and trend charts are illustrative, with no AML calculations performed in the browser.</p><h3>1. Triage the alert queue</h3><p>Filter by status or risk, then open an alert to inspect the explanation and evidence.</p><h3>2. Investigate and document</h3><p>Enter a reason to move an alert into review, clear it, or escalate it. Create a case from an alert to preserve investigation context.</p><h3>3. Connect your backend</h3><p>Use your existing username and password. The default backend is http://localhost:8080. The interface respects the roles in your access token.</p><button className="button primary" onClick={() => setLoginOpen(true)}>Connect backend</button><h3>Prototype scope</h3><p>Demo changes last until reload. Live mode supports the alert queue, disposition, cases, customer profiles, transactions, CSV imports, and rule configuration. Exchange-rate and watchlist administration, account detail routes, and registration are not included in this prototype.</p></section>}
+  <footer className="page-footer"><span><Icon name="shield" size={14}/>Sentinel AML <i/> Built for clarity. Designed for compliance.</span><span>{live ? 'Authenticated workspace' : 'Prototype · Sample data'}<span className="footer-dot">•</span>v0.1</span></footer>
+  </main></div>
+  {toast && <div className="toast" role="status"><Icon name="check" size={18}/>{toast}</div>}
+  {selected && modal(`Alert ALT-${selected.id}`, <><div className="detail-summary"><Badge value={selected.status}/><span className={`risk-score ${selected.risk_score >= 80 ? 'high' : 'medium'}`}>{selected.risk_score}<small>/ 100 risk score</small></span></div><div className="detail-block"><span className="eyebrow">CUSTOMER</span><h3>{selected.customer_id}</h3><p>Detected {date(selected.created_at)}</p></div><div className="explanation"><Icon name="alert"/><div><h3>{selected.typology || 'Detection explanation'}</h3><p>{selected.explanation || `Illustrative ${selected.typology?.toLowerCase()} alert. This sample demonstrates the analyst workflow; supporting evidence must be verified against backend records.`}</p></div></div><div className="detail-block"><h3>Triggered rules</h3>{selected.rules?.map(r => <div className="evidence" key={r.rule_code}><strong>{ruleNames[r.rule_code] || r.rule_code} · Weight {r.weight}</strong><p>{r.explanation}</p><details><summary>Configuration snapshot</summary><pre>{r.configuration}</pre></details></div>) || <div className="evidence">{selected.typology}<small>Illustrative rule attribution · demo only</small></div>}</div><div className="detail-block"><h3>Transaction evidence <span className="count-pill">{selected.evidenceCount || 0}</span></h3>{selected.evidence?.map(e => <button className="evidence evidence-button" key={e.transaction_id} onClick={() => run(async () => setRecord(await api(`/transactions/${e.transaction_id}`)))}>{e.transaction_id}<Icon name="right" size={15}/></button>)}{!selected.evidence?.length && <p>{live ? 'No evidence records returned.' : 'Connect the backend to explore linked transaction evidence.'}</p>}</div><div className="detail-block"><h3>Take action</h3>{['CLEARED', 'ESCALATED'].includes(selected.status) ? <div className="info-banner">This alert has a terminal disposition and is retained for audit.</div> : <><label className="form-label">Investigation note / disposition reason<textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Document your findings and reason for this action…"/></label><div className="action-grid">{selected.status === 'OPEN' && <button className="button primary" disabled={!reason.trim() || busy} onClick={() => disposition('IN_REVIEW')}>Start review</button>}<button className="button" disabled={!reason.trim() || busy} onClick={() => disposition('CLEARED')}>Clear alert</button><button className="button danger" disabled={!reason.trim() || busy} onClick={() => disposition('ESCALATED')}>Escalate</button></div></>}<label className="form-label">Case title<input value={caseTitle} onChange={e => setCaseTitle(e.target.value)} placeholder="Title for a linked investigation"/></label><button className="button full" disabled={!caseTitle.trim() || busy} onClick={createCase}><Icon name="folder" size={16}/>Create linked case</button></div><Audit events={audit}/>{error && <div className="error" role="alert">{error}</div>}</>, () => setSelected(null))}
+  {caseDetail && modal(`Case #${caseDetail.id}`, <><div className="detail-block"><Badge value={caseDetail.status}/><h3>{caseDetail.title}</h3><p>{caseDetail.customer_id} · {caseDetail.assigned_to || 'Unassigned'}</p></div><div className="detail-block"><h3>Linked alerts</h3>{caseDetail.alertIds?.map(id => <button className="evidence evidence-button" key={id} onClick={() => { const a = alerts.find(a => a.id === id); if (a) { setCaseDetail(null); openAlert(a) } else if (live) run(async () => { const detail = await api<Alert>(`/alerts/${id}`); setCaseDetail(null); await openAlert(detail) }) }}>ALT-{id}<Icon name="right" size={15}/></button>)}</div>{caseDetail.status !== 'CLOSED' && <div className="detail-block"><label className="form-label">Reason<textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Document this case update…"/></label><div className="action-grid">{(caseDetail.status === 'OPEN' ? ['IN_PROGRESS', 'CLOSED'] : ['CLOSED']).map(next => <button className="button primary" key={next} disabled={!reason.trim() || busy} onClick={() => run(async () => { if (live) await api(`/cases/${caseDetail.id}`, { method: 'PATCH', body: JSON.stringify({ status: next, reason, assignedTo: caseDetail.assigned_to }) }); setCases(prev => prev.map(c => c.id === caseDetail.id ? { ...c, status: next } : c)); setCaseDetail({ ...caseDetail, status: next }); setAudit(prev => [...prev, { new_state: next, reason, actor: 'Current analyst', occurred_at: new Date().toISOString() }]); setReason(''); setToast('Case updated') })}>{next === 'CLOSED' ? 'Close case' : 'Start investigation'}</button>)}</div></div>}<Audit events={audit}/>{error && <div className="error">{error}</div>}</>, () => setCaseDetail(null))}
+  {record && modal('Record details', <RecordView record={record}/>, () => setRecord(null))}
+  {loginOpen && modal(live ? 'Backend connection' : 'Connect to your backend', <><div className="detail-block"><span className="stat-icon green"><Icon name="shield" size={24}/></span><h3>{live ? 'You’re connected to Sentinel' : 'Your secure compliance workspace'}</h3><p>{live ? 'Requests use your authenticated session and assigned permissions.' : 'Sign in with an existing backend account. Your role determines the screens you can access.'}</p></div>{live ? <button className="button danger" onClick={() => { session.clear(); setLive(false); setAlerts(demoAlerts); setCustomers(demoCustomers); setCases(demoCases); setRules(demoRules); navigate('Overview'); setLoginOpen(false) }}><Icon name="exit" size={16}/>Disconnect and return to demo</button> : <form onSubmit={(e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const data = new FormData(e.currentTarget); run(async () => { await login(String(data.get('username')), String(data.get('password'))); setAlerts([]); setCustomers([]); setCases([]); setRules([]); setLive(true); setLoginOpen(false); navigate(roles().some(r => ['ROLE_ADMIN', 'ROLE_ANALYST'].includes(r)) ? 'Overview' : 'Customers'); setToast('Connected to backend') }) }}><label className="form-label">Username<input name="username" required autoComplete="username" placeholder="Your username"/></label><label className="form-label">Password<input name="password" type="password" required autoComplete="current-password" placeholder="Your password"/></label><button className="button primary full" disabled={busy} type="submit">{busy ? 'Connecting…' : 'Connect securely'}<Icon name="right" size={16}/></button></form>}{error && <div className="error" role="alert">{error}</div>}<div className="guide-note"><Icon name="globe" size={18}/><p>Local backend: {import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'}<br/>Keep the frontend on port 5173 for the configured CORS policy.</p></div></>, () => setLoginOpen(false))}
+ </div>
+}
+function Pagination({ live, page, count, change }: { live: boolean; page: number; count: number; change: (page: number) => void }) { return <div className="table-footer"><span>{live ? `Page ${page + 1}` : 'Demo records'} · {count} records loaded</span>{live && <span><button className="button" disabled={!page} onClick={() => change(page - 1)}>Previous</button><button className="button" disabled={count < 10} onClick={() => change(page + 1)}>Next</button></span>}</div> }
+function Audit({ events }: { events: Record<string, unknown>[] }) { return <div className="detail-block"><h3>Audit timeline</h3>{events.length ? events.map((event, i) => <div className="audit-event" key={i}><span className="pulse"/><div><strong>{label(String(event.new_state))}</strong><p>{String(event.reason)}</p><small>{String(event.actor)} · {date(String(event.occurred_at))}</small></div></div>) : <p>No workflow changes recorded in this view.</p>}</div> }
+function RecordView({ record }: { record: Record<string, unknown> }) { return <div className="record-view">{Object.entries(record).map(([key, value]) => <div key={key}><span>{label(key.replace(/([A-Z])/g, ' $1'))}</span>{typeof value === 'object' && value !== null ? <pre>{JSON.stringify(value, null, 2)}</pre> : <strong>{value === null ? '—' : String(value)}</strong>}</div>)}</div> }
+function ActivityChart({ live, alerts, period }: { live: boolean; alerts: Alert[]; period: string }) {
+ const values = live ? ['OPEN', 'IN_REVIEW', 'CLEARED', 'ESCALATED'].map(s => alerts.filter(a => a.status === s).length) : period === 'Last 7 days' ? [15, 22, 19, 29, 23, 33, 25] : [22, 15, 27, 21, 32, 26, 30, 19, 24, 30, 22, 35, 28, 33]
+ const max = live ? Math.max(...values, 4) : 40
+ return <div className="bar-chart"><div className="y-axis">{[4, 3, 2, 1, 0].map(n => <span key={n}>{Math.round(max * n / 4)}</span>)}</div><div className="plot"><div className="gridlines">{[0, 1, 2, 3, 4].map(n => <i key={n}/>)}</div><div className="bar-groups">{values.map((v, i) => <div className="bar-group" key={i}><div className="bar-pair"><div className="bar main-bar" style={{ height: `${v / max * 100}%` }} title={`${v} alerts`}/><div className="bar secondary-bar" style={{ height: `${(live ? alerts.filter(a => a.status === ['OPEN', 'IN_REVIEW', 'CLEARED', 'ESCALATED'][i] && a.risk_score >= 80).length : [5, 9, 7, 11, 8, 13, 9][i % 7]) / max * 100}%` }}/></div><span>{live ? ['Open', 'In review', 'Cleared', 'Escalated'][i] : `${(period === 'Last 7 days' ? 14 : 7) + i} Jul`}</span></div>)}</div></div></div>
+}
 export default App

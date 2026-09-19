@@ -10,23 +10,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping({"/api/auth", "/api/v1/auth"})
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/register")
+    @PostMapping({"/api/v1/auth/register", "/api/auth/register"})
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(authService.register(request));
     }
 
-    @PostMapping("/login")
+    @PostMapping({"/api/v1/auth/login", "/api/auth/login"})
     public ResponseEntity<AuthResponse> authenticate(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.authenticate(request));
     }
 
-    @PostMapping("/refresh")
+    @PostMapping({"/api/v1/auth/refresh", "/api/auth/refresh"})
     public ResponseEntity<AuthResponse> refreshToken(@RequestHeader("refresh_token") String refreshToken) {
         if (refreshToken != null && refreshToken.startsWith("Bearer ")) {
             refreshToken = refreshToken.substring(7);

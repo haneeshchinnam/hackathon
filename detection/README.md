@@ -2,6 +2,8 @@
 
 Java 17 / Spring Boot / PostgreSQL backend extending the existing JWT authentication project. Includes customer and account ingestion, synchronous transaction monitoring, configurable rules, ranked alerts, analyst case management, and immutable workflow audit records. No frontend is included.
 
+For a React implementation in a separate project, use [FRONTEND_CONTEXT.md](FRONTEND_CONTEXT.md) as the API and UI handoff contract.
+
 ## Run
 
 1. Install Java 17+ and PostgreSQL; create the `detection` database.
