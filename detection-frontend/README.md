@@ -24,6 +24,20 @@ The default is an explicitly labeled, interactive demo. Alerts and activity char
 
 Click the analyst profile, or connect from Help & documentation, to sign in to the backend using an existing username/password. Backend defaults to http://localhost:8080; copy `.env.example` to `.env` to override `VITE_BACKEND_URL`.
 
+The prototype does not include a registration screen. If you need to create a user, call the backend registration endpoint directly:
+
+```sh
+curl --location 'http://localhost:8080/api/v1/auth/register' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": "Admin@123"
+  }'
+```
+
+Registration creates a `ROLE_USER` account. Assign any analyst, ingestor, or administrator role in the backend database, then log in again so the new access token contains the updated role.
+
 Live API support includes:
 
 - Role-aware navigation for USER, ANALYST, INGESTOR, and ADMIN.
