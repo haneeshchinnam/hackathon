@@ -1,0 +1,4 @@
+customer_id,first_name,last_name,date_of_birth,email,country,customer_since,kyc_status,risk_rating,is_politically_exposed
+DEMO_C001,Synthetic,Structuring,1990-01-01,structuring@example.test,IN,2020-01-01,VERIFIED,MEDIUM,0
+DEMO_C002,Synthetic,Movement,1988-02-01,movement@example.test,IN,2020-01-01,VERIFIED,HIGH,0
+DEMO_C003,Synthetic,Watchlist,1985-03-01,watchlist@example.test,IN,2020-01-01,VERIFIED,HIGH,1

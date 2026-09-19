@@ -1,0 +1,4 @@
+account_id,customer_id,account_type,account_status,currency,open_date,close_date,branch_code,branch_city,current_balance,risk_rating
+DEMO_A001,DEMO_C001,SAVINGS,ACTIVE,USD,2020-01-01,,DEMO,Synthetic City,0,MEDIUM
+DEMO_A002,DEMO_C002,CURRENT,ACTIVE,INR,2020-01-01,,DEMO,Synthetic City,0,HIGH
+DEMO_A003,DEMO_C003,SAVINGS,ACTIVE,INR,2020-01-01,,DEMO,Synthetic City,0,HIGH
